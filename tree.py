@@ -29,16 +29,31 @@ class fractal_tree():
 
     def draw_tree(self):
         self.canvas[::]=0
-        self.draw_tree_recursion()
+        self.draw_tree_recursion(self.root)
         self.refresh_canvas()
 
     def draw_tree_recursion(self,root=-1):
-        if (root == -1):
-            root = self.root
         root.draw()
         if(not root.is_leaf):
             self.draw_tree_recursion(root.left)
             self.draw_tree_recursion(root.right)
+
+    def change_angle_delta(self, left_angle_delta, right_angle_delta = -1):
+        right_angle_delta = -right_angle_delta if (right_angle_delta != -1) else -left_angle_delta
+        self.left_angle_delta=left_angle_delta
+        self.right_angle_delta=right_angle_delta
+        self.change_angle_delta_recursion(self.root,left_angle_delta,right_angle_delta)
+        self.draw_tree()
+
+    def change_angle_delta_recursion(self,root,left_angle_delta,right_angle_delta):
+        if(not root.is_leaf):
+            root.end_position = root.get_end_position()
+            root.left.angle = root.angle + left_angle_delta
+            root.right.angle = root.angle + right_angle_delta
+            root.left.start_position = root.end_position
+            root.right.start_position = root.end_position
+            self.change_angle_delta_recursion(root.left,left_angle_delta,right_angle_delta)
+            self.change_angle_delta_recursion(root.right,left_angle_delta,right_angle_delta)
 
     def propagate_leaves(self,minimum_leaf_length = -1, growing_rate=100):
         new_leaves=[]
@@ -108,13 +123,19 @@ class branch():
 
 
 
+
 CANVAS_SIZE=(1080,1080,3)
 def main():
     canvas = np.zeros(CANVAS_SIZE,dtype=np.uint8)
-    tree = fractal_tree(canvas,left_angle_delta=25,left_length_factor=0.7,thickness_factor=0.1)
-    tree.plant(200)
+    tree = fractal_tree(canvas,left_angle_delta=0,left_length_factor=0.7, thickness_factor=0.1)
+    tree.plant(250)
     tree.draw_leaves()
     tree.grow(5)
+    cv2.waitKey(0)
+    for angle in range(361):
+        tree.change_angle_delta(angle,0)
+    for angle in range(91):
+        tree.change_angle_delta(360,angle)    
     cv2.waitKey(0)
 
 if __name__ == "__main__":
